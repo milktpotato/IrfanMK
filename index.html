@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alton Lab Inventory Management</title>
+    <title>Minimalist Inventory Management</title>
     <!-- Use Inter font for a modern, clean look -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -128,6 +128,13 @@
         .btn-outline:hover {
             background-color: var(--bg-color);
         }
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
         .btn-icon {
             padding: 0.4rem;
             background: transparent;
@@ -149,6 +156,8 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 340px;
             box-shadow: var(--shadow-sm);
         }
         table {
@@ -165,6 +174,9 @@
             letter-spacing: 0.05em;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         td {
             padding: 1rem 1.5rem;
@@ -240,6 +252,7 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--text-muted);
+            padding: 0;
         }
         .modal-body {
             padding: 1.5rem;
@@ -303,7 +316,10 @@
 
     <div class="container">
         <header>
-            <h1>Inventory</h1>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="LAB_20260530_112334_0000.png" alt="Alton Lab Logo" style="height: 48px; width: auto; object-fit: contain;">
+                <h1>Inventory</h1>
+            </div>
             <p style="color: var(--text-muted); font-size: 0.875rem;">Manage tools and consumables</p>
         </header>
 
@@ -382,7 +398,7 @@
     <dialog id="itemModal">
         <div class="modal-header">
             <h2 id="modalTitle">Add New Item</h2>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <button class="close-btn" onclick="closeModal()" type="button">&times;</button>
         </div>
         <form id="itemForm" onsubmit="handleFormSubmit(event)">
             <div class="modal-body">
@@ -422,7 +438,7 @@
     <dialog id="borrowModal">
         <div class="modal-header">
             <h2>Borrow Tool</h2>
-            <button class="close-btn" onclick="closeBorrowModal()">&times;</button>
+            <button class="close-btn" onclick="closeBorrowModal()" type="button">&times;</button>
         </div>
         <form id="borrowForm" onsubmit="handleBorrowSubmit(event)">
             <div class="modal-body">
@@ -444,6 +460,17 @@
                 <button type="submit" class="btn-primary">Confirm Borrow</button>
             </div>
         </form>
+    </dialog>
+
+    <!-- Custom Confirm Modal (Replaces window.confirm) -->
+    <dialog id="confirmModal">
+        <div class="modal-body" style="padding-bottom: 0;">
+            <p id="confirmMessage" style="font-size: 1rem; font-weight: 500;"></p>
+        </div>
+        <div class="modal-footer" style="border-top: none;">
+            <button class="btn-outline" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-danger" id="confirmActionBtn">Confirm</button>
+        </div>
     </dialog>
 
     <script>
@@ -504,6 +531,12 @@
         const borrowerNameInput = document.getElementById('borrowerName');
         const borrowQtyInput = document.getElementById('borrowQty');
         const borrowMaxQtyText = document.getElementById('borrowMaxQty');
+
+        // Confirm Modal Inputs
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmActionBtn = document.getElementById('confirmActionBtn');
+        let pendingConfirmAction = null;
 
         // --- Render Logic ---
         function renderTable() {
@@ -615,8 +648,24 @@
             }
         }
 
+        // --- Custom Confirm Modal Logic ---
+        function showConfirm(message, callback) {
+            confirmMessage.textContent = message;
+            pendingConfirmAction = callback;
+            confirmModal.showModal();
+        }
+
+        function closeConfirmModal() {
+            confirmModal.close();
+            pendingConfirmAction = null;
+        }
+
+        confirmActionBtn.addEventListener('click', () => {
+            if (pendingConfirmAction) pendingConfirmAction();
+            closeConfirmModal();
+        });
+
         // --- Event Listeners & Interactions ---
-        
         searchInput.addEventListener('input', renderTable);
 
         function updateQty(id, change) {
@@ -637,12 +686,12 @@
         }
 
         function deleteItem(id) {
-            if(confirm("Are you sure you want to remove this item?")) {
+            showConfirm("Are you sure you want to remove this item?", () => {
                 inventory = inventory.filter(i => i.id !== id);
                 borrowings = borrowings.filter(b => b.itemId !== id);
                 saveData();
                 renderTable();
-            }
+            });
         }
 
         function editItem(id) {
@@ -671,30 +720,24 @@
             form.reset();
         }
 
-        // Close modal if clicked outside of dialog
-        modal.addEventListener('click', (e) => {
-            const dialogDimensions = modal.getBoundingClientRect();
-            if (
-                e.clientX < dialogDimensions.left ||
-                e.clientX > dialogDimensions.right ||
-                e.clientY < dialogDimensions.top ||
-                e.clientY > dialogDimensions.bottom
-            ) {
-                closeModal();
-            }
-        });
+        // Close modals if clicked outside of dialog
+        function setupModalBackdropClick(modalElement, closeFunction) {
+            modalElement.addEventListener('click', (e) => {
+                const dialogDimensions = modalElement.getBoundingClientRect();
+                if (
+                    e.clientX < dialogDimensions.left ||
+                    e.clientX > dialogDimensions.right ||
+                    e.clientY < dialogDimensions.top ||
+                    e.clientY > dialogDimensions.bottom
+                ) {
+                    closeFunction();
+                }
+            });
+        }
 
-        borrowModal.addEventListener('click', (e) => {
-            const dialogDimensions = borrowModal.getBoundingClientRect();
-            if (
-                e.clientX < dialogDimensions.left ||
-                e.clientX > dialogDimensions.right ||
-                e.clientY < dialogDimensions.top ||
-                e.clientY > dialogDimensions.bottom
-            ) {
-                closeBorrowModal();
-            }
-        });
+        setupModalBackdropClick(modal, closeModal);
+        setupModalBackdropClick(borrowModal, closeBorrowModal);
+        setupModalBackdropClick(confirmModal, closeConfirmModal);
 
         function openBorrowModal(itemId) {
             const item = inventory.find(i => i.id === itemId);
@@ -739,11 +782,11 @@
         }
 
         function returnItem(borrowId) {
-            if(confirm("Confirm return of this tool?")) {
+            showConfirm("Confirm return of this tool?", () => {
                 borrowings = borrowings.filter(b => b.id !== borrowId);
                 saveData();
                 renderTable();
-            }
+            });
         }
 
         function handleFormSubmit(e) {
