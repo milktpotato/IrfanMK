@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Inventory Management</title>
+    <!-- Use Inter font for a modern, clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Variables for Minimalist Theme --- */
+        :root {
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #0f172a;
+            --primary-hover: #334155;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --transition: all 0.2s ease;
+        }
+
+        /* --- Reset & Base Styles --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+        
+        /* --- Toolbar (Search, Filter, Add) --- */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 300px;
+        }
+        input, select, textarea {
+            font-family: inherit;
+            font-size: 0.875rem;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: var(--transition);
+            background-color: var(--surface-color);
+            color: var(--text-main);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+        }
+        .search-input {
+            flex: 1;
+            max-width: 350px;
+        }
+        
+        /* --- Buttons --- */
+        button {
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.625rem 1.25rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .btn-outline:hover {
+            background-color: var(--bg-color);
+        }
+        .btn-icon {
+            padding: 0.4rem;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 4px;
+        }
+        .btn-icon:hover {
+            background: var(--border-color);
+            color: var(--text-main);
+        }
+        .btn-danger-icon:hover {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        /* --- Table Styles --- */
+        .table-container {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            vertical-align: middle;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        /* Category Badges */
+        .badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-tool {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+        .badge-consumable {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+
+        /* Quantity controls */
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .qty-val {
+            min-width: 2rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* --- Modal (Dialog) --- */
+        dialog {
+            margin: auto;
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 0;
+            width: 100%;
+            max-width: 450px;
+            background: var(--surface-color);
+            color: var(--text-main);
+        }
+        dialog::backdrop {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+        }
+        .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* --- New Layout Styles --- */
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 800px) {
+            .split-view {
+                grid-template-columns: 1fr;
+            }
+        }
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+        .badge-available { background-color: #dcfce7; color: #166534; }
+        .badge-in-use { background-color: #fee2e2; color: #991b1b; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Inventory</h1>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Manage tools and consumables</p>
+        </header>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search items...">
+            </div>
+            <button class="btn-primary" onclick="openModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Item
+            </button>
+        </div>
+
+        <div class="split-view">
+            <!-- Tools Side -->
+            <div>
+                <h2 class="section-title">Tools</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Status / Qty</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="toolsBody">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Consumables Side -->
+            <div>
+                <h2 class="section-title">Consumables</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consumablesBody">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <h2 class="section-title">Borrowing List</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Borrower</th>
+                            <th>Qty</th>
+                            <th>Date</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="borrowingBody">
+                        <!-- Rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <dialog id="itemModal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add New Item</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="itemForm" onsubmit="handleFormSubmit(event)">
+            <div class="modal-body">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="itemName">Item Name</label>
+                    <input type="text" id="itemName" required placeholder="e.g. Power Drill, Screws">
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemCategory">Category</label>
+                    <select id="itemCategory" required>
+                        <option value="Tool">Tool</option>
+                        <option value="Consumable">Consumable</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemQty">Initial Quantity</label>
+                    <input type="number" id="itemQty" required min="0" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="itemLocation">Location / Notes (Optional)</label>
+                    <textarea id="itemLocation" rows="2" placeholder="e.g. Shelf A3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save Item</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Borrow Modal -->
+    <dialog id="borrowModal">
+        <div class="modal-header">
+            <h2>Borrow Tool</h2>
+            <button class="close-btn" onclick="closeBorrowModal()">&times;</button>
+        </div>
+        <form id="borrowForm" onsubmit="handleBorrowSubmit(event)">
+            <div class="modal-body">
+                <input type="hidden" id="borrowItemId">
+                
+                <div class="form-group">
+                    <label for="borrowerName">Borrower Name</label>
+                    <input type="text" id="borrowerName" required placeholder="e.g. John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="borrowQty">Quantity to Borrow</label>
+                    <input type="number" id="borrowQty" required min="1" value="1">
+                    <small id="borrowMaxQty" style="color: var(--text-muted); font-size: 0.75rem;"></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" onclick="closeBorrowModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Confirm Borrow</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        // --- State Management ---
+        let inventory = [];
+        let borrowings = [];
+
+        // Load data from LocalStorage or set defaults
+        function loadData() {
+            const saved = localStorage.getItem('minimalistInventory');
+            const savedBorrowings = localStorage.getItem('minimalistBorrowings');
+            
+            if (saved) {
+                inventory = JSON.parse(saved);
+            } else {
+                // Default dummy data for demonstration
+                inventory = [
+                    { id: Date.now().toString(), name: 'Cordless Drill 20V', category: 'Tool', quantity: 3, location: 'Cabinet 1' },
+                    { id: (Date.now() + 1).toString(), name: 'Wood Screws 2"', category: 'Consumable', quantity: 250, location: 'Bin A-12' },
+                    { id: (Date.now() + 2).toString(), name: 'Hammer', category: 'Tool', quantity: 5, location: 'Wall Rack' },
+                    { id: (Date.now() + 3).toString(), name: 'Duct Tape', category: 'Consumable', quantity: 12, location: 'Drawer 2' },
+                ];
+            }
+
+            if (savedBorrowings) {
+                borrowings = JSON.parse(savedBorrowings);
+            }
+
+            saveData();
+            renderTable();
+        }
+
+        function saveData() {
+            localStorage.setItem('minimalistInventory', JSON.stringify(inventory));
+            localStorage.setItem('minimalistBorrowings', JSON.stringify(borrowings));
+        }
+
+        // --- DOM Elements ---
+        const toolsBody = document.getElementById('toolsBody');
+        const consumablesBody = document.getElementById('consumablesBody');
+        const borrowingBody = document.getElementById('borrowingBody');
+        const searchInput = document.getElementById('searchInput');
+        const modal = document.getElementById('itemModal');
+        const form = document.getElementById('itemForm');
+        
+        // Form Inputs
+        const idInput = document.getElementById('itemId');
+        const nameInput = document.getElementById('itemName');
+        const categoryInput = document.getElementById('itemCategory');
+        const qtyInput = document.getElementById('itemQty');
+        const locationInput = document.getElementById('itemLocation');
+        const modalTitle = document.getElementById('modalTitle');
+
+        // Borrow Form Inputs
+        const borrowModal = document.getElementById('borrowModal');
+        const borrowForm = document.getElementById('borrowForm');
+        const borrowItemIdInput = document.getElementById('borrowItemId');
+        const borrowerNameInput = document.getElementById('borrowerName');
+        const borrowQtyInput = document.getElementById('borrowQty');
+        const borrowMaxQtyText = document.getElementById('borrowMaxQty');
+
+        // --- Render Logic ---
+        function renderTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+
+            // Filter items based on search
+            const filteredItems = inventory.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm) || (item.location && item.location.toLowerCase().includes(searchTerm));
+                return matchesSearch;
+            });
+
+            toolsBody.innerHTML = '';
+            consumablesBody.innerHTML = '';
+            borrowingBody.innerHTML = '';
+
+            const editIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+            const deleteIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+            const plusIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+            const minusIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+            const borrowIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`;
+
+            let toolsCount = 0;
+            let consumablesCount = 0;
+
+            filteredItems.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                if (item.category === 'Tool') {
+                    toolsCount++;
+                    const itemBorrowings = borrowings.filter(b => b.itemId === item.id);
+                    const totalBorrowed = itemBorrowings.reduce((sum, b) => sum + b.quantity, 0);
+                    const available = item.quantity - totalBorrowed;
+                    
+                    let statusHtml = '';
+                    if (available > 0) {
+                        statusHtml = `<span class="badge badge-available">Available (${available}/${item.quantity})</span>`;
+                    } else if (item.quantity > 0) {
+                        statusHtml = `<span class="badge badge-in-use">In Use (${totalBorrowed}/${item.quantity})</span>`;
+                    } else {
+                        statusHtml = `<span class="badge badge-in-use" style="opacity:0.7">Out of Stock</span>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td>
+                            <div style="font-weight: 500;">${item.name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${item.location || '-'}</div>
+                        </td>
+                        <td>${statusHtml}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="openBorrowModal('${item.id}')" title="Borrow Tool" ${available === 0 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>${borrowIcon}</button>
+                            <button class="btn-icon" onclick="editItem('${item.id}')" title="Edit Item">${editIcon}</button>
+                            <button class="btn-icon btn-danger-icon" onclick="deleteItem('${item.id}')" title="Delete Item">${deleteIcon}</button>
+                        </td>
+                    `;
+                    toolsBody.appendChild(tr);
+                } else {
+                    consumablesCount++;
+                    tr.innerHTML = `
+                        <td>
+                            <div style="font-weight: 500;">${item.name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${item.location || '-'}</div>
+                        </td>
+                        <td>
+                            <div class="qty-control">
+                                <button class="btn-icon" onclick="updateQty('${item.id}', -1)" aria-label="Decrease quantity">${minusIcon}</button>
+                                <span class="qty-val">${item.quantity}</span>
+                                <button class="btn-icon" onclick="updateQty('${item.id}', 1)" aria-label="Increase quantity">${plusIcon}</button>
+                            </div>
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="editItem('${item.id}')" title="Edit Item">${editIcon}</button>
+                            <button class="btn-icon btn-danger-icon" onclick="deleteItem('${item.id}')" title="Delete Item">${deleteIcon}</button>
+                        </td>
+                    `;
+                    consumablesBody.appendChild(tr);
+                }
+            });
+
+            if (toolsCount === 0) {
+                toolsBody.innerHTML = `<tr><td colspan="3"><div class="empty-state" style="padding: 2rem;">No tools found.</div></td></tr>`;
+            }
+            if (consumablesCount === 0) {
+                consumablesBody.innerHTML = `<tr><td colspan="3"><div class="empty-state" style="padding: 2rem;">No consumables found.</div></td></tr>`;
+            }
+
+            // Render Borrowing List
+            if (borrowings.length === 0) {
+                borrowingBody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding: 2rem;">No active borrowings.</div></td></tr>`;
+            } else {
+                // Sort by date (newest first)
+                const sortedBorrowings = [...borrowings].sort((a, b) => new Date(b.date) - new Date(a.date));
+                sortedBorrowings.forEach(b => {
+                    const tool = inventory.find(i => i.id === b.itemId);
+                    const toolName = tool ? tool.name : 'Unknown Tool (Deleted)';
+                    const dateStr = new Date(b.date).toLocaleDateString();
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 500;">${toolName}</td>
+                        <td>${b.borrower}</td>
+                        <td>${b.quantity}</td>
+                        <td style="color: var(--text-muted);">${dateStr}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="returnItem('${b.id}')">Return</button>
+                        </td>
+                    `;
+                    borrowingBody.appendChild(tr);
+                });
+            }
+        }
+
+        // --- Event Listeners & Interactions ---
+        
+        searchInput.addEventListener('input', renderTable);
+
+        function updateQty(id, change) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                const newQty = parseInt(item.quantity) + change;
+                if (newQty >= 0) {
+                    if (item.category === 'Tool') {
+                        const itemBorrowings = borrowings.filter(b => b.itemId === id);
+                        const totalBorrowed = itemBorrowings.reduce((sum, b) => sum + b.quantity, 0);
+                        if (newQty < totalBorrowed) return; // Prevent reducing stock below borrowed amount
+                    }
+                    item.quantity = newQty;
+                    saveData();
+                    renderTable();
+                }
+            }
+        }
+
+        function deleteItem(id) {
+            if(confirm("Are you sure you want to remove this item?")) {
+                inventory = inventory.filter(i => i.id !== id);
+                borrowings = borrowings.filter(b => b.itemId !== id);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function editItem(id) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                idInput.value = item.id;
+                nameInput.value = item.name;
+                categoryInput.value = item.category;
+                qtyInput.value = item.quantity;
+                locationInput.value = item.location;
+                
+                modalTitle.textContent = "Edit Item";
+                modal.showModal();
+            }
+        }
+
+        function openModal() {
+            form.reset();
+            idInput.value = ""; // Clear ID for new item
+            modalTitle.textContent = "Add New Item";
+            modal.showModal();
+        }
+
+        function closeModal() {
+            modal.close();
+            form.reset();
+        }
+
+        // Close modal if clicked outside of dialog
+        modal.addEventListener('click', (e) => {
+            const dialogDimensions = modal.getBoundingClientRect();
+            if (
+                e.clientX < dialogDimensions.left ||
+                e.clientX > dialogDimensions.right ||
+                e.clientY < dialogDimensions.top ||
+                e.clientY > dialogDimensions.bottom
+            ) {
+                closeModal();
+            }
+        });
+
+        borrowModal.addEventListener('click', (e) => {
+            const dialogDimensions = borrowModal.getBoundingClientRect();
+            if (
+                e.clientX < dialogDimensions.left ||
+                e.clientX > dialogDimensions.right ||
+                e.clientY < dialogDimensions.top ||
+                e.clientY > dialogDimensions.bottom
+            ) {
+                closeBorrowModal();
+            }
+        });
+
+        function openBorrowModal(itemId) {
+            const item = inventory.find(i => i.id === itemId);
+            if(!item) return;
+
+            const itemBorrowings = borrowings.filter(b => b.itemId === itemId);
+            const totalBorrowed = itemBorrowings.reduce((sum, b) => sum + b.quantity, 0);
+            const available = item.quantity - totalBorrowed;
+
+            borrowForm.reset();
+            borrowItemIdInput.value = itemId;
+            borrowQtyInput.max = available;
+            borrowMaxQtyText.textContent = `Max available: ${available}`;
+            
+            borrowModal.showModal();
+        }
+
+        function closeBorrowModal() {
+            borrowModal.close();
+            borrowForm.reset();
+        }
+
+        function handleBorrowSubmit(e) {
+            e.preventDefault();
+            const itemId = borrowItemIdInput.value;
+            const borrower = borrowerNameInput.value.trim();
+            const quantity = parseInt(borrowQtyInput.value);
+
+            if(!itemId || !borrower || quantity <= 0) return;
+
+            borrowings.push({
+                id: Date.now().toString(),
+                itemId,
+                borrower,
+                quantity,
+                date: new Date().toISOString()
+            });
+
+            saveData();
+            renderTable();
+            closeBorrowModal();
+        }
+
+        function returnItem(borrowId) {
+            if(confirm("Confirm return of this tool?")) {
+                borrowings = borrowings.filter(b => b.id !== borrowId);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const itemData = {
+                name: nameInput.value.trim(),
+                category: categoryInput.value,
+                quantity: parseInt(qtyInput.value) || 0,
+                location: locationInput.value.trim()
+            };
+
+            const existingId = idInput.value;
+
+            if (existingId) {
+                // Update existing
+                const index = inventory.findIndex(i => i.id === existingId);
+                if (index !== -1) {
+                    inventory[index] = { ...inventory[index], ...itemData };
+                }
+            } else {
+                // Add new
+                inventory.push({
+                    id: Date.now().toString(),
+                    ...itemData
+                });
+            }
+
+            saveData();
+            renderTable();
+            closeModal();
+        }
+
+        // --- Initialization ---
+        window.onload = loadData;
+    </script>
+</body>
+</html>
